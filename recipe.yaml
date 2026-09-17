@@ -5,33 +5,11 @@ recipe:
   args:
   description: >-
     rime-lantern: English gloss next to every Chinese candidate.
-    Installs the Lua filter and the gloss table, and wires them into
-    雾凇拼音 (rime_ice) with the english_gloss switch (Control+Shift+E).
-    For other schemas use likidu/rime-lantern:files and see README.md.
+    Installs the Lua filter and the gloss table. Wire it into your schema
+    with the snippet in README.md (or, for a fresh 雾凇拼音 setup with no
+    rime_ice.custom.yaml yet, run likidu/rime-lantern:rime_ice).
 
 install_files: >-
   lua/lantern.lua
   lantern/cedict-en.tsv
   lantern/LICENSE
-
-patch_files:
-  rime_ice.custom.yaml:
-    - patch/+:
-        switches/+:
-          - name: english_gloss
-            states: [ 译关, 译开 ]
-            abbrev: [ 关, 译 ]
-        engine/filters/+:
-          - lua_filter@*lantern
-        key_binder/bindings/+:
-          - { when: always, toggle: english_gloss, accept: Control+Shift+E }
-        lantern:
-          data: lantern/cedict-en.tsv
-          senses: 1
-          max_chars: 24
-          separator: " · "
-          option: english_gloss
-  default.custom.yaml:
-    - patch/+:
-        switcher/save_options/+:
-          - english_gloss

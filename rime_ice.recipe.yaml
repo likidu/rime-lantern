@@ -1,0 +1,35 @@
+# encoding: utf-8
+---
+recipe:
+  Rx: rime_ice
+  args:
+  description: >-
+    rime-lantern files plus automatic wiring into 雾凇拼音 (rime_ice).
+    ONLY for a Rime user directory that has no rime_ice.custom.yaml yet:
+    librime resolves the "/+" append keys when a patch block already
+    exists there, which would replace your switches and filters instead of
+    adding to them. If the file exists, use likidu/rime-lantern and add the
+    README snippet by hand.
+
+install_files: >-
+  lua/lantern.lua
+  lantern/cedict-en.tsv
+  lantern/LICENSE
+
+patch_files:
+  rime_ice.custom.yaml:
+    - patch/+:
+        switches/+:
+          - name: english_gloss
+            states: [ 译关, 译开 ]
+            abbrev: [ 关, 译 ]
+        engine/filters/+:
+          - lua_filter@*lantern
+        key_binder/bindings/+:
+          - { when: always, toggle: english_gloss, accept: Control+Shift+E }
+        lantern:
+          data: lantern/cedict-en.tsv
+          senses: 1
+          max_chars: 24
+          separator: " · "
+          option: english_gloss

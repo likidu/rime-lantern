@@ -1,5 +1,15 @@
-# Remember the english_gloss switch across restarts (when toggled from the
-# schema menu). Merge into your default.custom.yaml.
+# Remember the english_gloss switch across restarts when it is toggled from
+# the schema menu. Merge into your default.custom.yaml.
+#
+# The list is spelled out in full on purpose: a "switcher/save_options/+"
+# append only works when the patch block has no other switcher keys and no
+# __include; otherwise librime resolves it into a plain replacement. These are
+# 雾凇拼音's defaults plus english_gloss; keep whatever else you have added.
 patch:
-  switcher/save_options/+:
+  switcher/save_options:
+    - ascii_punct
+    - traditionalization
+    - emoji
+    - full_shape
+    - search_single_char
     - english_gloss

@@ -24,30 +24,25 @@ sentence translation. Built and tested against
 
 ## Install
 
-**plum** (any frontend), wires it into Rime-Ice for you:
+**plum** (any frontend) installs the filter and the table:
 
 ```sh
 rime-install likidu/rime-lantern
 ```
 
-Files only, for other schemas:
-
-```sh
-rime-install likidu/rime-lantern:files
-```
-
-**Arch Linux**: the `rime-lantern` AUR package installs the filter and the
-table under `/usr/share/rime-data/`. Then add the config below to your Rime
-user directory.
+**Arch Linux**: the `rime-lantern` AUR package installs them under
+`/usr/share/rime-data/`.
 
 **Manual**: copy `lua/lantern.lua` to `<rime user dir>/lua/` and the
 `lantern/` directory to `<rime user dir>/lantern/`.
 
-Redeploy Rime afterwards.
+Then wire it into your schema (next section) and redeploy.
 
 ## Enable in Rime-Ice
 
-`rime_ice.custom.yaml` in your Rime user directory (see `examples/`):
+Add this to `rime_ice.custom.yaml` in your Rime user directory (the file is
+in `examples/`). If you already have a `patch:` block, put these keys inside
+it:
 
 ```yaml
 patch:
@@ -67,11 +62,22 @@ patch:
     option: english_gloss
 ```
 
-To remember the switch across restarts when toggled from the F4 menu, add
-`english_gloss` to `switcher/save_options` in `default.custom.yaml`
-(`examples/default.custom.yaml`). If your `default.custom.yaml` uses
-`__include: rime_ice_suggestion:/`, a `/+` append lands on the base config
-instead of the included list, so spell out the full list there.
+Fresh setup with **no** `rime_ice.custom.yaml` yet? plum can write it:
+
+```sh
+rime-install likidu/rime-lantern:rime_ice
+```
+
+Do not run that on an existing file: when a `patch:` block is already there,
+librime resolves the `/+` keys during the merge and the result *replaces*
+Rime-Ice's switches and filters instead of appending to them. Editing by hand
+is always safe.
+
+To remember the switch across restarts when toggled from the F4 menu, list
+`english_gloss` in `switcher/save_options` in `default.custom.yaml`
+(`examples/default.custom.yaml` has Rime-Ice's defaults plus it). Spell the
+list out in full: an append there breaks in the same way as soon as the patch
+block has other switcher keys or an `__include`.
 
 The switch starts **off**. Toggle with `Control+Shift+E` or from the schema
 menu (F4). Change `accept:` to rebind.
