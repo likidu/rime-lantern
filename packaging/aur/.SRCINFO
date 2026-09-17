@@ -1,0 +1,14 @@
+pkgbase = rime-lantern
+	pkgdesc = English gloss next to every Chinese candidate in Rime (Lua filter plus a CC-CEDICT table)
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://github.com/likidu/rime-lantern
+	arch = any
+	license = MIT
+	license = CC-BY-SA-4.0
+	depends = librime
+	optdepends = rime-ice-git: 雾凇拼音, the schema the bundled config targets
+	source = rime-lantern-0.1.0.tar.gz::https://github.com/likidu/rime-lantern/archive/v0.1.0.tar.gz
+	sha256sums = 257e8c2cc15ddfb436d6d4bfd1a213779dd780d4f2dc1df0c2dae27969bf208a
+
+pkgname = rime-lantern

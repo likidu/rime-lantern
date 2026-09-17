@@ -9,7 +9,7 @@ license=('MIT' 'CC-BY-SA-4.0')
 depends=('librime')
 optdepends=('rime-ice-git: 雾凇拼音, the schema the bundled config targets')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('257e8c2cc15ddfb436d6d4bfd1a213779dd780d4f2dc1df0c2dae27969bf208a')
 
 package() {
   cd "$pkgname-$pkgver"
