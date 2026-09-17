@@ -1,0 +1,23 @@
+# Maintainer: likidu <https://github.com/likidu>
+pkgname=rime-lantern
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="English gloss next to every Chinese candidate in Rime (Lua filter plus a CC-CEDICT table)"
+arch=('any')
+url="https://github.com/likidu/rime-lantern"
+license=('MIT' 'CC-BY-SA-4.0')
+depends=('librime')
+optdepends=('rime-ice-git: 雾凇拼音, the schema the bundled config targets')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm644 lua/lantern.lua "$pkgdir/usr/share/rime-data/lua/lantern.lua"
+  install -Dm644 lantern/cedict-en.tsv "$pkgdir/usr/share/rime-data/lantern/cedict-en.tsv"
+  install -Dm644 lantern/LICENSE "$pkgdir/usr/share/rime-data/lantern/LICENSE"
+  install -Dm644 examples/rime_ice.custom.yaml "$pkgdir/usr/share/doc/$pkgname/rime_ice.custom.yaml"
+  install -Dm644 examples/default.custom.yaml "$pkgdir/usr/share/doc/$pkgname/default.custom.yaml"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

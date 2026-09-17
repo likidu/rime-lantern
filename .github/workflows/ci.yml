@@ -1,0 +1,28 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install toolchain and librime
+        run: pacman -Syu --noconfirm --needed base-devel git librime lua luajit busted python python-pytest
+      - uses: actions/checkout@v4
+      - name: Python tests (data pipeline)
+        run: python -m pytest -q tests/python
+      - name: Lua specs
+        run: busted tests/lua
+      - name: LuaJIT smoke (no utf8 library)
+        run: luajit tests/lua/luajit_smoke.lua
+      - name: Build headless probe
+        run: cc -O -Wall -o tests/harness/rime_probe tests/harness/rime_probe.c -lrime
+      - name: Cache rime-ice clone
+        uses: actions/cache@v4
+        with:
+          path: /tmp/lantern-work/rime-ice
+          key: rime-ice-${{ runner.os }}-${{ github.run_number }}
+          restore-keys: rime-ice-${{ runner.os }}-
+      - name: Integration (deploy Rime-Ice + lantern, probe candidates)
+        run: LANTERN_WORK=/tmp/lantern-work tests/integration.sh

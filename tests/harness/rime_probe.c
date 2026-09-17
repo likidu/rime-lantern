@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   traits.distribution_name = "rime-lantern probe";
   traits.distribution_code_name = "rime-probe";
   traits.distribution_version = "0.1";
-  traits.min_log_level = 1;
+  traits.min_log_level = 0;
   rime->setup(&traits);
   rime->initialize(NULL);
   if (rime->start_maintenance(True)) rime->join_maintenance_thread();

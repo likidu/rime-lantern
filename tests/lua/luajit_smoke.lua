@@ -1,0 +1,16 @@
+-- Exercises the no-utf8 code paths. Run with: luajit tests/lua/luajit_smoke.lua
+package.path = "./lua/?.lua;" .. package.path
+local M = require("lantern")
+assert(utf8 == nil, "this smoke test expects a Lua without the utf8 library")
+assert(M._is_cjk("银行"), "cjk")
+assert(M._is_cjk("龘"), "cjk high")
+assert(M._is_cjk("𠀀"), "cjk ext b")
+assert(not M._is_cjk("hello"), "ascii")
+assert(not M._is_cjk("🏦"), "emoji")
+assert(not M._is_cjk("X光"), "mixed")
+assert(M._shape("Beijing municipality, capital", 1, 24) == "Beijing municipality…", "word boundary")
+assert(M._shape("to exploit; to open up; to develop", 3, 24) == "to exploit; to open up…", "senses")
+assert(M._shape("éééééé", 1, 5) == "éééé…", "multibyte count")
+local t, n = M._load("tests/lua/fixtures/gloss.tsv")
+assert(n == 6 and t["銀行"] == "bank", "load")
+print("luajit smoke ok")
