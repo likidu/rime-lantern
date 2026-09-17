@@ -1,0 +1,12 @@
+The gloss table in this directory (cedict-en.tsv) is derived from CC-CEDICT,
+the community-maintained Chinese-English dictionary published by MDBG:
+https://cc-cedict.org / https://www.mdbg.net/chinese/dictionary?page=cc-cedict
+
+CC-CEDICT is licensed under the Creative Commons Attribution-ShareAlike 4.0
+International License: https://creativecommons.org/licenses/by-sa/4.0/
+
+cedict-en.tsv is therefore also released under CC BY-SA 4.0. The source
+release date and sha256 are recorded in the file header. The transformation
+(sense selection, cleaning, merging) is performed by tools/build_gloss.py in
+the rime-lantern repository, which is MIT licensed; the data it produces
+remains CC BY-SA 4.0.
