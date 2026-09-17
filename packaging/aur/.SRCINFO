@@ -1,5 +1,5 @@
 pkgbase = rime-lantern
-	pkgdesc = English gloss next to every Chinese candidate in Rime (Lua filter plus a CC-CEDICT table)
+	pkgdesc = English gloss on the highlighted Chinese candidate in Rime (Lua filter plus a CC-CEDICT table)
 	pkgver = 0.1.0
 	pkgrel = 1
 	url = https://github.com/likidu/rime-lantern
