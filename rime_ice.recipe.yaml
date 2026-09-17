@@ -29,6 +29,7 @@ patch_files:
           - { when: always, toggle: english_gloss, accept: Control+Shift+E }
         lantern:
           data: lantern/cedict-en.tsv
+          mode: highlighted
           senses: 1
           max_chars: 24
           separator: " · "

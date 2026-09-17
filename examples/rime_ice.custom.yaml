@@ -11,6 +11,7 @@ patch:
     - { when: always, toggle: english_gloss, accept: Control+Shift+E }
   lantern:
     data: lantern/cedict-en.tsv
+    mode: highlighted   # or: all
     senses: 1
     max_chars: 24
     separator: " · "

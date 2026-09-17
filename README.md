@@ -1,14 +1,17 @@
 # rime-lantern
 
-An English gloss next to every Chinese candidate in [Rime](https://rime.im).
-Type pinyin as usual; with the switch on, each candidate shows a short
-dictionary meaning:
+An English gloss on the highlighted Chinese candidate in [Rime](https://rime.im).
+Type pinyin as usual; with the switch on, the highlighted candidate shows a
+short dictionary meaning, and the gloss follows the highlight as you move it:
 
 ```
-1. 银行  bank        2. 🏦        3. 引航        4. 引吭
-1. 开发  to exploit  2. 开  to open  3. 凯  triumphal music
-1. 给予  jǐ yǔ · to give          ← Rime-Ice's correction hint is kept
+1. 银行  bank   2. 🏦   3. 引航   4. 引吭        ← after typing yinhang
+1. 银行         2. 🏦   3. 引航  to pilot        ← after pressing Down twice
+1. 给予  jǐ yǔ · to give                         ← Rime-Ice's correction hint is kept
 ```
+
+`mode: all` glosses every candidate instead, which suits a vertical
+candidate list.
 
 It is a `lua_filter` plus a gloss table built from
 [CC-CEDICT](https://cc-cedict.org). Word-level, offline, no network, no
@@ -56,6 +59,7 @@ patch:
     - { when: always, toggle: english_gloss, accept: Control+Shift+E }
   lantern:
     data: lantern/cedict-en.tsv
+    mode: highlighted
     senses: 1
     max_chars: 24
     separator: " · "
@@ -93,14 +97,19 @@ simplifier or traditionalizer so it sees the final text; appending with
 | key         | default                 | meaning                                              |
 |-------------|-------------------------|------------------------------------------------------|
 | `data`      | `lantern/cedict-en.tsv` | gloss table, relative to the user dir then shared dir |
+| `mode`      | `highlighted`           | `highlighted`: only the highlighted candidate, following Up/Down and paging; `all`: every candidate |
 | `senses`    | `1`                     | how many senses to show, joined by `; `              |
-| `max_chars` | `24`                    | truncate longer glosses with `…`; `0` disables       |
+| `max_chars` | `24`                    | truncate longer glosses with `…`; `0` disables. With `mode: highlighted` only one gloss is on screen, so `40` reads well |
 | `separator` | `" · "`                 | placed between an existing comment and the gloss     |
 | `option`    | `english_gloss`         | the switch that turns the gloss on                   |
 | `ellipsis`  | `…`                     | truncation marker                                    |
 
 ## Behaviour
 
+- `mode: highlighted` hooks Rime's context updates: on every key, including
+  Up/Down and paging, it puts the gloss on the highlighted candidate and
+  removes it from the others. `mode: all` is a plain filter that glosses
+  every candidate once.
 - Only candidates made entirely of CJK ideographs are looked up. English
   words, emoji, numbers, and sentence candidates stay as they are.
 - An existing comment (a pinyin or correction hint) is kept; the gloss is

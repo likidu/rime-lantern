@@ -14,20 +14,48 @@ local function fake_input(cands)
   end }
 end
 
+local function fake_ctx(option_on)
+  local ctx = {
+    connected = {},
+    get_option = function(_, name) return name == "english_gloss" and option_on end,
+  }
+  ctx.update_notifier = { connect = function(_, fn)
+    ctx.connected[#ctx.connected + 1] = fn
+    return { disconnect = function() ctx.disconnected = true end }
+  end }
+  return ctx
+end
+
+-- extra: config overrides; defaults to mode "all" so v1 specs stay meaningful
 local function fake_env(option_on, path, extra)
+  extra = extra or {}
+  if extra["lantern/mode"] == nil then extra["lantern/mode"] = "all" end
   local env = {
     name_space = "*lantern",
     engine = {
-      context = { get_option = function(_, name) return name == "english_gloss" and option_on end },
+      context = fake_ctx(option_on),
       schema = { config = {
-        get_string = function(_, key) return (extra or {})[key] end,
-        get_int = function(_, key) return (extra or {})[key] end,
+        get_string = function(_, key) return extra[key] end,
+        get_int = function(_, key) return extra[key] end,
       } },
     },
   }
   M.init(env)
   env.lantern.path = path
   return env
+end
+
+-- A fake composition with one segment and a lazily "prepared" menu.
+local function fake_menu(ctx, cands, selected)
+  local prepared = 0
+  local seg = { selected_index = selected or 0 }
+  seg.menu = {
+    prepare = function(_, n) if n > prepared then prepared = math.min(n, #cands) end end,
+    candidate_count = function() return prepared end,
+    get_candidate_at = function(_, i) return cands[i + 1] end,
+  }
+  ctx.composition = { empty = function() return false end, back = function() return seg end }
+  return seg
 end
 
 local function run(env, cands)
@@ -96,6 +124,80 @@ describe("_append", function()
   end)
   it("keeps an existing comment in front", function()
     assert.equal("jǐ yǔ · to give", M._append("jǐ yǔ", "to give", " · "))
+  end)
+end)
+
+describe("_strip", function()
+  it("removes a gloss we appended and nothing else", function()
+    assert.equal("", M._strip("bank", "bank", " · "))
+    assert.equal("jǐ yǔ", M._strip("jǐ yǔ · to give", "to give", " · "))
+    assert.equal("jǐ yǔ", M._strip("jǐ yǔ", "to give", " · "))
+    assert.equal("", M._strip("", "bank", " · "))
+    assert.equal("", M._strip(nil, "bank", " · "))
+    assert.equal("banker", M._strip("banker", "bank", " · "))
+  end)
+end)
+
+describe("highlighted mode", function()
+  before_each(function() M.table = nil end)
+
+  it("connects the update notifier only in highlighted mode", function()
+    local env = fake_env(true, FIXTURE, { ["lantern/mode"] = "highlighted" })
+    assert.equal(1, #env.engine.context.connected)
+    assert.is_not_nil(env.lantern.connection)
+    local env_all = fake_env(true, FIXTURE)
+    assert.equal(0, #env_all.engine.context.connected)
+    M.fini(env)
+    assert.is_true(env.engine.context.disconnected)
+  end)
+
+  it("func passes everything through untouched", function()
+    local env = fake_env(true, FIXTURE, { ["lantern/mode"] = "highlighted" })
+    local out = run(env, { fake_cand("银行") })
+    assert.equal("", out[1].comment)
+  end)
+
+  it("glosses the initially highlighted candidate after preparing the menu", function()
+    local env = fake_env(true, FIXTURE, { ["lantern/mode"] = "highlighted" })
+    local ctx = env.engine.context
+    local cands = { fake_cand("银行"), fake_cand("🏦"), fake_cand("引航") }
+    fake_menu(ctx, cands, 0)
+    M._on_update(ctx, env)
+    assert.equal("bank", cands[1].comment)
+    assert.equal("", cands[2].comment)
+    assert.equal("", cands[3].comment)
+  end)
+
+  it("moves the gloss with the highlight and keeps other comments", function()
+    local env = fake_env(true, FIXTURE, { ["lantern/mode"] = "highlighted" })
+    local ctx = env.engine.context
+    local cands = { fake_cand("给予", "jǐ yǔ"), fake_cand("给"), fake_cand("开发") }
+    local seg = fake_menu(ctx, cands, 0)
+    M._on_update(ctx, env)
+    assert.equal("jǐ yǔ · to give", cands[1].comment)
+    seg.selected_index = 2
+    M._on_update(ctx, env)
+    assert.equal("jǐ yǔ", cands[1].comment)
+    assert.equal("", cands[2].comment)
+    assert.equal("to exploit", cands[3].comment)
+    seg.selected_index = 0
+    M._on_update(ctx, env)
+    assert.equal("jǐ yǔ · to give", cands[1].comment)
+    assert.equal("", cands[3].comment)
+  end)
+
+  it("does nothing when the option is off or the composition is empty", function()
+    local env = fake_env(false, FIXTURE, { ["lantern/mode"] = "highlighted" })
+    local ctx = env.engine.context
+    local cands = { fake_cand("银行") }
+    fake_menu(ctx, cands, 0)
+    M._on_update(ctx, env)
+    assert.equal("", cands[1].comment)
+    assert.is_nil(M.table)
+    local env2 = fake_env(true, FIXTURE, { ["lantern/mode"] = "highlighted" })
+    env2.engine.context.composition = { empty = function() return true end }
+    M._on_update(env2.engine.context, env2)
+    assert.is_nil(M.table)
   end)
 end)
 

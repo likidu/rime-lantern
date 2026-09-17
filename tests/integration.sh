@@ -37,6 +37,19 @@ check "corrector hint kept, gloss appended"  $'^给予\tjǐ yǔ · to give$' "$(
 check "English candidate has no gloss"        $'^hello\t$'              "$(run --option english_gloss=1 hello)"
 check "long gloss truncated at word boundary" $'^北京\tBeijing municipality…$' "$(run --option english_gloss=1 beijing)"
 check "switch off: no gloss"                  $'^银行\t$'               "$(run yinhang)"
+# highlighted mode (default): the gloss follows the highlight
+down=$(run --option english_gloss=1 'yinhang{Down}{Down}')
+check "highlight moved: first candidate loses gloss" $'^银行\t$'      "$down"
+check "highlight moved: emoji still blank"           $'^🏦\t$'        "$down"
+check "highlight back: gloss returns with hint kept" $'^给予\tjǐ yǔ · to give$' "$(run --option english_gloss=1 'geiyu{Down}{Up}')"
+check "highlight on second candidate"                $'^给\tto$'      "$(run --option english_gloss=1 'geiyu{Down}')"
+check "paging: first of page two is glossed"         $'^被\tquilt$'   "$(run --option english_gloss=1 'beijing{Page_Down}')"
+# mode: all glosses every candidate
+sed 's/mode: highlighted.*/mode: all/' "$here/examples/rime_ice.custom.yaml" > "$user/rime_ice.custom.yaml"
+all=$(run --option english_gloss=1 yinhang)
+check "mode all: first candidate glossed"            $'^银行\tbank$'  "$all"
+check "mode all: later candidate glossed too"        $'^因\tcause$'   "$all"
+cp "$here/examples/rime_ice.custom.yaml" "$user/"
 check "filter wired into rime_ice"  'lua_filter@\*lantern'  "$(cat "$user/build/rime_ice.schema.yaml")"
 check "switch remembered in default" 'english_gloss'         "$(sed -n '/save_options/,/fold_options/p' "$user/build/default.yaml")"
 check "hotkey bound"                 'Control\+Shift\+E'     "$(cat "$user/build/rime_ice.schema.yaml")"

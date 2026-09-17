@@ -6,6 +6,7 @@
 --   switches/+: [ { name: english_gloss, states: [ 译关, 译开 ] } ]
 --   lantern:
 --     data: lantern/cedict-en.tsv   # relative to the Rime user or shared dir
+--     mode: highlighted             # highlighted (follows the highlight) | all
 --     senses: 1                     # how many senses to show
 --     max_chars: 24                 # truncate the gloss (in characters)
 --     separator: " · "              # between an existing comment and the gloss
@@ -17,6 +18,7 @@ local M = {}
 
 M.DEFAULTS = {
   data = "lantern/cedict-en.tsv",
+  mode = "highlighted",
   senses = 1,
   max_chars = 24,
   separator = " · ",
@@ -130,6 +132,17 @@ function M._append(existing, gloss, separator)
   return existing .. (separator or M.DEFAULTS.separator) .. gloss
 end
 
+-- Undo _append: remove a gloss we put on a comment, keeping the rest.
+function M._strip(comment, gloss, separator)
+  if comment == nil or comment == "" then return "" end
+  if comment == gloss then return "" end
+  local suffix = (separator or M.DEFAULTS.separator) .. gloss
+  if #comment > #suffix and comment:sub(-#suffix) == suffix then
+    return comment:sub(1, #comment - #suffix)
+  end
+  return comment
+end
+
 -- Load a TSV file into a lookup table. Returns table, row count.
 function M._load(path)
   local t, rows = {}, 0
@@ -179,6 +192,7 @@ local function read_options(config, ns)
   for k, v in pairs(M.DEFAULTS) do o[k] = v end
   if config == nil then return o end
   local s = config:get_string(ns .. "/data");      if s and s ~= "" then o.data = s end
+  s = config:get_string(ns .. "/mode");            if s == "all" or s == "highlighted" then o.mode = s end
   s = config:get_string(ns .. "/separator");       if s and s ~= "" then o.separator = s end
   s = config:get_string(ns .. "/option");          if s and s ~= "" then o.option = s end
   s = config:get_string(ns .. "/ellipsis");        if s and s ~= "" then o.ellipsis = s end
@@ -205,17 +219,55 @@ local function ensure_loaded(env)
   return t ~= nil
 end
 
+-- Highlighted mode: runs on every context update (typing, highlight moves,
+-- paging). Paints the gloss onto the highlighted candidate and removes it
+-- from the others, leaving any other comment (e.g. a correction hint) alone.
+function M._on_update(ctx, env)
+  local opts = env.lantern
+  if not ctx:get_option(opts.option) then return end
+  local comp = ctx.composition
+  if comp == nil or comp:empty() then return end
+  local seg = comp:back()
+  local menu = seg and seg.menu
+  if menu == nil then return end
+  ensure_loaded(env)
+  local selected = seg.selected_index or 0
+  if menu.prepare then menu:prepare(selected + 1) end
+  local t = M.table
+  for i = 0, menu:candidate_count() - 1 do
+    local cand = menu:get_candidate_at(i)
+    if cand and M._is_cjk(cand.text) then
+      local gloss = t[cand.text]
+      if gloss then
+        local shaped = M._shape(gloss, opts.senses, opts.max_chars, opts.ellipsis)
+        local base = M._strip(cand.comment, shaped, opts.separator)
+        if i == selected then
+          cand.comment = M._append(base, shaped, opts.separator)
+        else
+          cand.comment = base
+        end
+      end
+    end
+  end
+end
+
 function M.init(env)
   local ns = (env.name_space or "lantern"):gsub("^%*", "")
   local config = env.engine and env.engine.schema and env.engine.schema.config
   env.lantern = read_options(config, ns)
   env.lantern.path = find_data(env.lantern.data)
+  if env.lantern.mode == "highlighted" then
+    local ctx = env.engine.context
+    env.lantern.connection = ctx.update_notifier:connect(function(c)
+      M._on_update(c, env)
+    end)
+  end
 end
 
 function M.func(input, env)
   local opts = env.lantern
   local ctx = env.engine.context
-  if not ctx:get_option(opts.option) then
+  if opts.mode == "highlighted" or not ctx:get_option(opts.option) then
     for cand in input:iter() do yield(cand) end
     return
   end
@@ -234,6 +286,9 @@ function M.func(input, env)
   end
 end
 
-function M.fini(env) end
+function M.fini(env)
+  local c = env.lantern and env.lantern.connection
+  if c then c:disconnect() end
+end
 
 return M
