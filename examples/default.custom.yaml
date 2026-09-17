@@ -1,0 +1,5 @@
+# Remember the english_gloss switch across restarts (when toggled from the
+# schema menu). Merge into your default.custom.yaml.
+patch:
+  switcher/save_options/+:
+    - english_gloss

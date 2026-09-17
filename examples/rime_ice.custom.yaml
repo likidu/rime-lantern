@@ -1,0 +1,17 @@
+# rime-lantern for 雾凇拼音 (Rime-Ice). Copy to your Rime user directory as
+# rime_ice.custom.yaml, or merge into an existing one, then redeploy.
+patch:
+  switches/+:
+    - name: english_gloss
+      states: [ 译关, 译开 ]
+      abbrev: [ 关, 译 ]
+  engine/filters/+:
+    - lua_filter@*lantern
+  key_binder/bindings/+:
+    - { when: always, toggle: english_gloss, accept: Control+Shift+E }
+  lantern:
+    data: lantern/cedict-en.tsv
+    senses: 1
+    max_chars: 24
+    separator: " · "
+    option: english_gloss
